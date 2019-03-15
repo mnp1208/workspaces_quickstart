@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: WorkSpaces infrastructure
+Resources:
+  workspace1:
+    Type: "AWS::WorkSpaces::Workspace"
+    Properties:
+      BundleId: "wsb-8vbljg4r6"
+      DirectoryId: "d-9067147950"
+      UserName: "user1"
+      WorkspaceProperties:
+        ComputeTypeName: "STANDARD"
+        RootVolumeSizeGib: 80
+        RunningMode: "AUTO_STOP"
+        RunningModeAutoStopTimeoutInMinutes: 60
+        UserVolumeSizeGib: 50
+      Tags:
+        -
+          Key: "poc"
+          Value: true

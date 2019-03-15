@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: WorkSpaces POC networking infrastructure
+Parameters:
+  VPCName:
+    Description: Name of the VPC
+    Type: String
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: False
+      EnableDnsHostnames: False
+      Tags:
+        - Key: "Name"
+          Value: !Ref VPCName
+        - Key: "creator"
+          Value: "CloudFormation"
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 0
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: False
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: "Public Subnet A"
+        - Key: "creator"
+          Value: "CloudFormation"
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 1
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: False
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: "Public Subnet B"
+        - Key: "creator"
+          Value: "CloudFormation"
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: !Join
+            - ''
+            - - !Ref VPCName
+              - " IGW"
+        - Key: "creator"
+          Value: "CloudFormation"
+  AttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VPC
+      InternetGatewayId:
+        Ref: InternetGateway
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags:
+        - Key: "Name"
+          Value: !Join
+            - ''
+            - - !Ref VPCName
+              - " Route Table"
+  InternetRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGateway
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  PrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnetA
+      RouteTableId:
+        Ref: RouteTable
+  PrivateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnetB
+      RouteTableId:
+        Ref: RouteTable

@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: WorkSpaces POC end user computing infrastructure
+Parameters:
+  VPCName:
+    Description: Name of the VPC
+    Type: String
+Resources:
+  # myDirectory: 
+  #   Type: AWS::DirectoryService::SimpleAD
+  #   Properties:
+  #     Name: "corp.example.com"
+  #     Password:
+  #       Ref: SimpleADPW
+  #     Size: "Small"
+  #     VpcSettings:
+  #       SubnetIds:
+  #         - Ref: subnetID1
+  #         - Ref: subnetID2
+  #       VpcId:
+  #         Ref: vpcID
+  workspace1:
+    Type: "AWS::WorkSpaces::Workspace"
+    Properties:
+      BundleId: "wsb-8vbljg4r6"
+      DirectoryId: "d-9067147950"
+      UserName: "user1"
+      WorkspaceProperties:
+        ComputeTypeName: "STANDARD"
+        RootVolumeSizeGib: 80
+        RunningMode: "AUTO_STOP"
+        RunningModeAutoStopTimeoutInMinutes: 60
+        UserVolumeSizeGib: 50
+      Tags:
+        - Key: "creator"
+          Value: "CloudFormation"

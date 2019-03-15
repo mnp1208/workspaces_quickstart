@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: WorkSpaces POC compute infrastructure
+Parameters:
+  SubnetId:
+    Description: ID of the subnet
+    Type: String
+  SourceSecurityGroupId:
+    Description: ID of the WorkSpaces security group
+    Type: String
+Mappings:
+  AmiMap:
+    us-east-1:
+      WindowsServer2019: ami-0410d3d3bd6d555f4
+Resources:
+  WindowsServer2019:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [AmiMap, !Ref "AWS::Region", WindowsServer2019]
+      InstanceType: "t2.micro"
+      Monitoring: True
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo '* * * * * yes > /dev/null &' > /tmp/dev_null.txt
+          sudo -u ec2-user bash -c 'crontab /tmp/dev_null.txt'
+      SubnetId: !Ref SubnetId
+      Tags:
+        -
+          Key: "Name"
+          Value: "Windows Servier 2019"
+        -
+          Key: "creator"
+          Value: "CloudFormation"
+  WorkspacesSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: WorkspacesSecurityGroup
+      GroupDescription: Security group that allows WorkSpaces to talk with this compute instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3389
+          ToPort: 3389
+          SourceSecurityGroupId:
+            Ref: SourceSecurityGroupId
+          Description: RDP
+        - IpProtocol: tcp
+          FromPort: 1433
+          ToPort: 1433
+          SourceSecurityGroupId:
+            Ref: SourceSecurityGroupId
+          Description: SQLServer
+      Tags:
+        - Resource Tag
+      VpcId: String

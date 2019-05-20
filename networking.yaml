@@ -5,6 +5,7 @@ Parameters:
     Description: Name of the VPC
     Type: String
 Resources:
+  #Create the VPC
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -16,34 +17,67 @@ Resources:
           Value: !Ref VPCName
         - Key: "creator"
           Value: "CloudFormation"
-  PublicSubnetA:
+  #Create Public Subnet 1          
+  PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select
         - 0
         - Fn::GetAZs: !Ref 'AWS::Region'
-      CidrBlock: 10.0.0.0/24
-      MapPublicIpOnLaunch: False
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: True
       VpcId: !Ref VPC
       Tags:
         - Key: "Name"
-          Value: "Public Subnet A"
+          Value: "Public Subnet 1"
         - Key: "creator"
           Value: "CloudFormation"
-  PublicSubnetB:
+  #Create Public Subnet 2
+  PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select
         - 1
         - Fn::GetAZs: !Ref 'AWS::Region'
-      CidrBlock: 10.0.1.0/24
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: True
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: "Public Subnet 2"
+        - Key: "creator"
+          Value: "CloudFormation"
+  #Create Private Subnet 3
+  PrivateSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 1
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.0.3.0/24
       MapPublicIpOnLaunch: False
       VpcId: !Ref VPC
       Tags:
         - Key: "Name"
-          Value: "Public Subnet B"
+          Value: "Private Subnet 3"
         - Key: "creator"
           Value: "CloudFormation"
+  #Create Private Subnet 4
+  PrivateSubnet4:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 1
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.0.4.0/24
+      MapPublicIpOnLaunch: False
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: "Private Subnet 4"
+        - Key: "creator"
+          Value: "CloudFormation"
+  #Create Internet Gateway
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
@@ -55,6 +89,7 @@ Resources:
               - " IGW"
         - Key: "creator"
           Value: "CloudFormation"
+  #Attach the Internet Gateway to the VPC
   AttachInternetGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -62,7 +97,8 @@ Resources:
         Ref: VPC
       InternetGatewayId:
         Ref: InternetGateway
-  RouteTable:
+  #Create Public RouteTable
+  PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId:
@@ -72,27 +108,59 @@ Resources:
           Value: !Join
             - ''
             - - !Ref VPCName
-              - " Route Table"
+              - " Public Route Table"
+  #Create Private RouteTable
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags:
+        - Key: "Name"
+          Value: !Join
+            - ''
+            - - !Ref VPCName
+              - " Private Route Table"
+  #Add Route to IGW in the Public RouteTable
   InternetRoute:
     Type: AWS::EC2::Route
     DependsOn: InternetGateway
     Properties:
       RouteTableId:
-        Ref: RouteTable
+        Ref: PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId:
         Ref: InternetGateway
-  PrivateSubnetARouteTableAssociation:
+  #Associate Public SubNet 1 to Public RouteTable
+  PublicSubnet1ARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId:
-        Ref: PublicSubnetA
+        Ref: PublicSubnet1
       RouteTableId:
-        Ref: RouteTable
-  PrivateSubnetBRouteTableAssociation:
+        Ref: PublicRouteTable
+  #Associate Public SubNet 2 to Public RouteTable
+  PublicSubnet2ARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId:
-        Ref: PublicSubnetB
+        Ref: PublicSubnet2
       RouteTableId:
-        Ref: RouteTable
+        Ref: PublicRouteTable
+  #Associate Private SubNet 3 to Private RouteTable
+  PrivateSubnet3ARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSubnet3
+      RouteTableId:
+        Ref: PrivateRouteTable
+  #Associate Private SubNet 4 to Private RouteTable
+  PrivateSubnet4ARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSubnet4
+      RouteTableId:
+        Ref: PrivateRouteTable
+ 
